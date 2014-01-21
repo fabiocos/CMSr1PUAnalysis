@@ -12,6 +12,7 @@
 <use   name="DataFormats/EcalDigi"/>
 <use   name="CondFormats/EcalObjects"/>
 <use   name="CondFormats/HcalObjects"/>
+<use   name="CalibCalorimetry/EcalTPGTools"/>
 <use   name="TrackingTools/Records"/>
 <use   name="RecoLocalCalo/HcalRecAlgos"/>
 <use   name="TrackingTools/TransientTrackingRecHit"/>
