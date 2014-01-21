@@ -95,6 +95,9 @@ private:
 
   bool rewe_;
 
+  std::vector< std::pair<float,float> > ebTowers;
+  std::vector <std::pair<float,float> > eeTowers;
+
 };
 
 using namespace edm;
@@ -212,6 +215,9 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EcalTPGScale ecalScale ;
   ecalScale.setEventSetup(iSetup) ;
 
+  ebTowers.clear();
+  eeTowers.clear();
+
   for (unsigned int i=0;i<tp.product()->size();i++) {
     EcalTriggerPrimitiveDigi d=(*(tp.product()))[i];
     int subdet=d.id().subDet();
@@ -249,6 +255,10 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
         
       }
       
+      std::pair<float,float> thisTower(Et,rhEtSum);
+      if (subdet == 1 ) ebTowers.push_back(thisTower);
+      if (subdet == 2 ) eeTowers.push_back(thisTower); 
+
       std::cout << "SubD = " << subdet << " RH size = " << recTow.size() << " Et = " << Et << " RH Et = " << rhEtSum << std::endl; 
 
     }
