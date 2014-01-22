@@ -283,6 +283,10 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   edm::ESHandle<EcalTrigTowerConstituentsMap> eTTmap_;
   iSetup.get<IdealGeometryRecord>().get(eTTmap_);
 
+  edm::ESHandle<EcalChannelStatus> chanstat;
+  iSetup.get<EcalChannelStatusRcd>().get(chanstat);
+  const EcalChannelStatus* cstat=chanstat.product();      
+
   EcalTPGScale ecalScale ;
   ecalScale.setEventSetup(iSetup) ;
 
@@ -295,6 +299,10 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   for (unsigned int i=0;i<tp.product()->size();i++) {
 
     EcalTriggerPrimitiveDigi d=(*(tp.product()))[i];
+
+    // Reject spikes in TP 
+    if ( d.sFGVB() == 0 ) continue;
+
     int subdet=d.id().subDet();
     const EcalTrigTowerDetId TPtowid= d.id();
 
@@ -310,7 +318,19 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
       if ( subdet == 1 ) {
         EBDetId myid(recTow[iRec]);
         EcalRecHitCollection::const_iterator myRecHit = EBRecHit->find(myid);
+
         if ( myRecHit != EBRecHit->end() ) {
+
+          // Quality selection on ECAL rec hits
+          Bool_t is_spike=false;
+          if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
+          int chanstatus=-1;
+          EcalChannelStatus::const_iterator chIt = cstat->find( myRecHit->id() );
+          if ( chIt != cstat->end() ) {
+            chanstatus = chIt->getStatusCode() & 0x1F;
+          }
+          if (is_spike || chanstatus!=0) continue;
+
           float  theta=theBarrelGeometry->getGeometry(myid)->getPosition().theta();
           //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
@@ -321,6 +341,17 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
         EEDetId myid(recTow[iRec]);
         EcalRecHitCollection::const_iterator myRecHit = EERecHit->find(myid);
         if ( myRecHit != EERecHit->end() ) {
+
+          // Quality selection on ECAL rec hits
+          Bool_t is_spike=false;
+          if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
+          int chanstatus=-1;
+          EcalChannelStatus::const_iterator chIt = cstat->find( myRecHit->id() );
+          if ( chIt != cstat->end() ) {
+            chanstatus = chIt->getStatusCode() & 0x1F;
+          }
+          if (is_spike || chanstatus!=0) continue;
+
           float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
           //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
