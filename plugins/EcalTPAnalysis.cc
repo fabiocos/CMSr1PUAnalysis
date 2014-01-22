@@ -80,6 +80,7 @@ private:
   edm::InputTag tpCollection_;
 
   double tpEtTh_;
+  double rhTEtTh_;
 
   const int numvtx;
 
@@ -108,6 +109,7 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   eeRecHitCollection_(iPSet.getParameter<edm::InputTag>("eeRecHitCollection")),
   tpCollection_(iPSet.getParameter<edm::InputTag>("tpCollection")),
   tpEtTh_(iPSet.getParameter<double>("tpEtTh")),
+  rhTEtTh_(iPSet.getParameter<double>("rhTEtTh")),
   numvtx(60)
 {    
 
@@ -194,9 +196,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
   edm::Handle<EcalRecHitCollection> rechit_EB_col;
   iEvent.getByLabel(ebRecHitCollection_,rechit_EB_col);
+  const EBRecHitCollection * EBRecHit = rechit_EB_col.product();
 
   edm::Handle<EcalRecHitCollection> rechit_EE_col;
   iEvent.getByLabel(eeRecHitCollection_,rechit_EE_col);
+  const EERecHitCollection * EERecHit = rechit_EE_col.product();
   
 
   edm::ESHandle<CaloGeometry> theGeometry;
@@ -218,53 +222,107 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   ebTowers.clear();
   eeTowers.clear();
 
+  float tpEBEtSum = 0.;
+  float tpEEEtSum = 0.;
+  float rhEBEtSum = 0.;
+  float rhEEEtSum = 0.;
+
+  unsigned int rhEBass = 0;
+  unsigned int rhEEass = 0;
+
   for (unsigned int i=0;i<tp.product()->size();i++) {
+
     EcalTriggerPrimitiveDigi d=(*(tp.product()))[i];
     int subdet=d.id().subDet();
     const EcalTrigTowerDetId TPtowid= d.id();
 
-    float Et = ecalScale.getTPGInGeV(d.compressedEt(), TPtowid) ; 
-    if (d.id().ietaAbs()==27 || d.id().ietaAbs()==28)    Et*=2;
+    float tpEt = ecalScale.getTPGInGeV(d.compressedEt(), TPtowid) ; 
+    if (d.id().ietaAbs()==27 || d.id().ietaAbs()==28)    tpEt*=2;
 
+    if ( tpEt <= tpEtTh_ ) { continue; }
 
-    if ( Et > tpEtTh_ ) { 
+    std::vector<DetId> recTow((*eTTmap_).constituentsOf(TPtowid));
 
-      std::vector<DetId> recTow((*eTTmap_).constituentsOf(TPtowid));
+    float rhEt = 0.;
 
-      float rhEtSum = 0.;
+    for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
 
-      for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
-
-        if ( subdet == 1 ) {
-          EBDetId myid(recTow[iRec]);
-          const EBRecHitCollection * EBRecHit = rechit_EB_col.product();
-          EcalRecHitCollection::const_iterator myRecHit = EBRecHit->find(myid);
+      if ( subdet == 1 ) {
+        EBDetId myid(recTow[iRec]);
+        EcalRecHitCollection::const_iterator myRecHit = EBRecHit->find(myid);
+        if ( myRecHit != EBRecHit->end() ) {
           float  theta=theBarrelGeometry->getGeometry(myid)->getPosition().theta();
-          //std::cout << myRecHit->energy()*std::sin(theta) << std::endl;
-          rhEtSum += myRecHit->energy()*std::sin(theta);
+          //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
+          rhEt += myRecHit->energy()*std::sin(theta);
+          rhEBass++;
         }
-        else if ( subdet == 2 ) {
-          EEDetId myid(recTow[iRec]);
-          const EERecHitCollection * EERecHit = rechit_EE_col.product();
-          EcalRecHitCollection::const_iterator myRecHit = EERecHit->find(myid);
-          float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
-          //std::cout << myRecHit->energy()*std::sin(theta) << std::endl;
-          rhEtSum += myRecHit->energy()*std::sin(theta);
-        }
-
-        
       }
-      
-      std::pair<float,float> thisTower(Et,rhEtSum);
-      if (subdet == 1 ) ebTowers.push_back(thisTower);
-      if (subdet == 2 ) eeTowers.push_back(thisTower); 
-
-      std::cout << "SubD = " << subdet << " RH size = " << recTow.size() << " Et = " << Et << " RH Et = " << rhEtSum << std::endl; 
+      else if ( subdet == 2 ) {
+        EEDetId myid(recTow[iRec]);
+        EcalRecHitCollection::const_iterator myRecHit = EERecHit->find(myid);
+        if ( myRecHit != EERecHit->end() ) {
+          float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
+          //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
+          rhEt += myRecHit->energy()*std::sin(theta);
+          rhEEass++;
+        }
+      }
 
     }
 
-  }
+    if ( rhEt <= rhTEtTh_ ) { continue; }
     
+    std::pair<float,float> thisTower(tpEt,rhEt);
+    if (subdet == 1 ) ebTowers.push_back(thisTower);
+    if (subdet == 2 ) eeTowers.push_back(thisTower); 
+
+    //    std::cout << "SubD = " << subdet << " RH size = " << recTow.size() << " TP Et = " << tpEt << " RH Et = " << rhEt << std::endl; 
+
+  }
+   
+  for (unsigned int iPair=0; iPair < ebTowers.size(); iPair++) {
+    tpEBEtSum += ebTowers[iPair].first;
+    rhEBEtSum += ebTowers[iPair].second;
+  }
+   
+  for (unsigned int iPair=0; iPair < eeTowers.size(); iPair++) {
+    tpEEEtSum += eeTowers[iPair].first;
+    rhEEEtSum += eeTowers[iPair].second;
+  }
+
+  unsigned int rhEBnum = 0;
+  unsigned int rhEEnum = 0;
+  unsigned int rhEBnumTT = 0;
+  unsigned int rhEEnumTT = 0;
+  float rhEBTotEt = 0.;
+  float rhEETotEt = 0.;
+
+  for ( EcalRecHitCollection::const_iterator myRecHit = EBRecHit->begin(); myRecHit != EBRecHit->end(); ++myRecHit ) {
+    rhEBnum++;
+    EBDetId myid(myRecHit->id());
+    float  theta=theBarrelGeometry->getGeometry(myid)->getPosition().theta();
+    rhEBTotEt += myRecHit->energy()*std::sin(theta);
+    EcalTrigTowerDetId towid = (*eTTmap_).towerOf(myid);
+    if ( tp.product()->find(towid) != tp.product()->end() ) rhEBnumTT++;
+  }
+  for ( EcalRecHitCollection::const_iterator myRecHit = EERecHit->begin(); myRecHit != EERecHit->end(); ++myRecHit ) {
+    rhEEnum++;
+    EEDetId myid(myRecHit->id());
+    float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
+    rhEETotEt += myRecHit->energy()*std::sin(theta);
+    EcalTrigTowerDetId towid = (*eTTmap_).towerOf(myid);
+    if ( tp.product()->find(towid) != tp.product()->end() ) rhEEnumTT++;
+  }
+
+  std::cout << "\n" << std::endl;
+  std::cout << "EB: tot RH = " << rhEBTotEt << " TP Et sum = " << tpEBEtSum << " RH Et sum = " << rhEBEtSum << std::endl;
+  if ( rhEBnum != rhEBnumTT || rhEBnumTT != rhEBass )  std::cout << "EB rechit # = " << rhEBnum << " associated # = " << rhEBnumTT << " found in TT = " << rhEBass << std::endl;
+  std::cout << "\n" << std::endl;
+  std::cout << "EE: tot RH = " << rhEETotEt << " TP Et sum = " << tpEEEtSum << " RH Et sum = " << rhEEEtSum << std::endl;
+  if ( rhEEnum != rhEEnumTT || rhEEnumTT != rhEEass )  std::cout << "EE rechit # = " << rhEEnum << " associated # = " << rhEEnumTT << " found in TT = " << rhEEass << std::endl;
+  std::cout << "\n" << std::endl;
+
+ 
 }//analyze
 
 

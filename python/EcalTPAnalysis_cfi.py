@@ -5,5 +5,6 @@ ecalTPAnalysis = cms.EDAnalyzer("EcalTPAnalysis",
     ebRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEB"),                                     
     eeRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
     tpCollection = cms.InputTag("ecalDigis:EcalTriggerPrimitives"),
-    tpEtTh = cms.double(0.5)
+    tpEtTh = cms.double(0.5),
+    rhTEtTh = cms.double(1.)
 )                                     
