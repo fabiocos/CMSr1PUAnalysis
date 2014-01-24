@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-ecalTPAnalysis = cms.EDAnalyzer("EcalTPAnalysis",
+stdEcalTPPset = cms.PSet(
     recoVertexCollection = cms.InputTag("offlinePrimaryVertices"),
     ebRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEB"),                                     
     eeRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
@@ -8,4 +8,8 @@ ecalTPAnalysis = cms.EDAnalyzer("EcalTPAnalysis",
     tpEtTh = cms.double(0.5),
     rhTEtTh = cms.double(1.),
     vtxSel = cms.int32(20)
+)
+
+ecalTPAnalysis = cms.EDAnalyzer("EcalTPAnalysis",
+    stdEcalTPPset                                
 )                                     

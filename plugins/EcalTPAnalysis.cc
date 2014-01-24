@@ -168,8 +168,8 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
     rewe_ = true;
   }
 
-  EBrhVSttM_ = fs->make<TH2F>( "EBrhVStt", "EB RH tower vs TT Et matched", 20,0.,20.,20,0.,20.);
-  EErhVSttM_ = fs->make<TH2F>( "EErhVStt", "EE RH tower vs TT Et matched", 20,0.,20.,20,0.,20.);
+  EBrhVSttM_ = fs->make<TH2F>( "EBrhVSttM", "EB RH tower vs TT Et matched", 20,0.,20.,20,0.,20.);
+  EErhVSttM_ = fs->make<TH2F>( "EErhVSttM", "EE RH tower vs TT Et matched", 20,0.,20.,20,0.,20.);
 
   EBrhEt_ = fs->make<TH1F>( "EBrhEt", "EB RH tower Et", 100,0.,100.);
   EBtpEt_ = fs->make<TH1F>( "EBtpEt", "EB TP tower Et", 100,0.,100.);
@@ -300,11 +300,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
     EcalTriggerPrimitiveDigi d=(*(tp.product()))[i];
 
-    // Reject spikes in TP 
-    if ( d.sFGVB() == 0 ) continue;
-
     int subdet=d.id().subDet();
     const EcalTrigTowerDetId TPtowid= d.id();
+
+    // Reject spikes in TP 
+    if ( subdet == 1 && d.sFGVB() == 0 ) continue;
 
     float tpEt = ecalScale.getTPGInGeV(d.compressedEt(), TPtowid) ; 
     if (d.id().ietaAbs()==27 || d.id().ietaAbs()==28)    tpEt*=2;
@@ -353,7 +353,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
           if (is_spike || chanstatus!=0) continue;
 
           float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
-          //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
+          //          std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
           rhEEass++;
         }
@@ -420,12 +420,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
       rhEEEtSumM += eeTowers[iPair].second;
       EErhVSttM_->Fill(eeTowers[iPair].second,eeTowers[iPair].first,theWeight); 
       if ( (int)nVtx == vtxSel_ ) {
-        EEtpEt_->Fill(eeTowers[iPair].first,theWeight);
+        EEtpEtM_->Fill(eeTowers[iPair].first,theWeight);
         EErhEtM_->Fill(eeTowers[iPair].second,theWeight);
       }
     }
   }
-
 
   if ( (int)nVtx == vtxSel_ ) {
     EEtpEtSum_->Fill(tpEEEtSum,theWeight);
