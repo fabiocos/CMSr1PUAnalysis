@@ -89,6 +89,7 @@ process.load("RecoLocalCalo.HcalRecAlgos.hcalRecAlgoESProd_cfi")
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(500000)
+#    input = cms.untracked.int32(10000)
 #    input = cms.untracked.int32(1000)
 )
 process.source = cms.Source("PoolSource",
@@ -347,7 +348,7 @@ process.ecalMinBiasAnalysis = cms.EDAnalyzer("EcalMinBiasAnalysis",
     stdEcalAnaPset,
     PUrew = cms.PSet(
         puSummaryCollection = cms.untracked.InputTag("addPileupInfo","",""),
-        dataPUFile = cms.untracked.string("202299_truePileUpHisto.root"),
+        dataPUFile = cms.untracked.string("200473_truePileUpHisto.root"),
         mcPUFile = cms.untracked.string("monitorPUSummaryInfo_histo.root"),
         dataPUHisto = cms.untracked.string("pileup"),
         mcPUHisto = cms.untracked.string("monitorPUSummaryInfo/nTruePU")
@@ -442,6 +443,7 @@ process.p = cms.Path(
                      process.HBHENoiseFilter * process.eeBadScFilter *
                      process.ecalDigis *
                      process.patchGct *
+                     process.ecalTPAnalysis * 
                      process.ecalMinBiasAnalysis * process.hcalMinBiasAnalysis * process.caloTowerAnalysis * process.l1CaloAnalysis)
 # in MC I don't include the process.hltHighLevel in the sequence
 
