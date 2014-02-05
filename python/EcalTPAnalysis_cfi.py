@@ -7,7 +7,8 @@ stdEcalTPPset = cms.PSet(
     tpCollection = cms.InputTag("ecalDigis:EcalTriggerPrimitives"),
     tpEtTh = cms.double(0.5),
     rhTEtTh = cms.double(1.),
-    vtxSel = cms.int32(20)
+    vtxSel = cms.int32(20),
+    effTh = cms.double(50.)
 )
 
 ecalTPAnalysis = cms.EDAnalyzer("EcalTPAnalysis",

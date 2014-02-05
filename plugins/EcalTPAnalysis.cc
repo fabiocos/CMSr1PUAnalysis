@@ -83,6 +83,9 @@ private:
   double rhTEtTh_;
 
   int vtxSel_;
+  
+  double effTh_;
+
   const int numvtx;
 
   edm::LumiReWeighting * theLumiW_;
@@ -102,6 +105,13 @@ private:
 
   TH2F * EBrhVSttM_;
   TH2F * EErhVSttM_;
+
+  TH1F * EBrh_;
+  TH1F * EBtp_;
+  TH1F * EErh_;
+  TH1F * EEtp_;
+  TH1F * EBrhM_;
+  TH1F * EErhM_;
 
   TH1F * EBrhEt_;
   TH1F * EBtpEt_;
@@ -133,6 +143,22 @@ private:
   TProfile * EErhEtSumMVSvtx_;
   TProfile * EEtpEtSumMVSvtx_;
 
+  std::vector<double> Wvtx;
+  std::vector<double> rhOWvtx;
+  std::vector<double> tpOWvtx;
+  std::vector<double> rhOMWvtx;
+  std::vector<double> tpOMWvtx;
+
+  TProfile * rhSumVSvtx_;
+  TProfile * tpSumVSvtx_;
+  TProfile * rhSumMVSvtx_;
+  TProfile * tpSumMVSvtx_;
+
+  TH1F * rhSumOthEff_;
+  TH1F * tpSumOthEff_;
+  TH1F * rhSumOthMEff_;
+  TH1F * tpSumOthMEff_;
+
 };
 
 using namespace edm;
@@ -144,7 +170,9 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   tpCollection_(iPSet.getParameter<edm::InputTag>("tpCollection")),
   tpEtTh_(iPSet.getParameter<double>("tpEtTh")),
   rhTEtTh_(iPSet.getParameter<double>("rhTEtTh")),
-  vtxSel_(iPSet.getParameter<int>("vtxSel")),numvtx(60)
+  vtxSel_(iPSet.getParameter<int>("vtxSel")),
+  effTh_(iPSet.getParameter<double>("effTh")),
+  numvtx(60)
 {    
 
   edm::Service<TFileService> fs;
@@ -171,6 +199,13 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   EBrhVSttM_ = fs->make<TH2F>( "EBrhVSttM", "EB RH tower vs TT Et matched", 20,0.,20.,20,0.,20.);
   EErhVSttM_ = fs->make<TH2F>( "EErhVSttM", "EE RH tower vs TT Et matched", 20,0.,20.,20,0.,20.);
 
+  EBrh_ = fs->make<TH1F>( "EBrh", "EB RH tower multiplicity", 100,0.,100.);
+  EBtp_ = fs->make<TH1F>( "EBtp", "EB TP tower multiplicity", 100,0.,100.);
+  EErh_ = fs->make<TH1F>( "EErh", "EE RH tower multiplicity", 100,0.,100.);
+  EEtp_ = fs->make<TH1F>( "EEtp", "EE TP tower multiplicity", 100,0.,100.);
+  EBrhM_ = fs->make<TH1F>( "EBrhM", "EB RH tower multiplicity matched", 100,0.,100.);
+  EErhM_ = fs->make<TH1F>( "EErhM", "EE RH tower multiplicity matched", 100,0.,100.);
+
   EBrhEt_ = fs->make<TH1F>( "EBrhEt", "EB RH tower Et", 100,0.,100.);
   EBtpEt_ = fs->make<TH1F>( "EBtpEt", "EB TP tower Et", 100,0.,100.);
   EErhEt_ = fs->make<TH1F>( "EErhEt", "EE RH tower Et", 100,0.,100.);
@@ -181,25 +216,43 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   EErhEtM_ = fs->make<TH1F>( "EErhEtM", "EE RH tower Et matched", 100,0.,100.);
   EEtpEtM_ = fs->make<TH1F>( "EEtpEtM", "EE TP tower Et matched", 100,0.,100.);
 
-  EBrhEtSum_ = fs->make<TH1F>( "EBrhEtSum", "EB RH tower EtSum", 100,0.,100.);
-  EBtpEtSum_ = fs->make<TH1F>( "EBtpEtSum", "EB TP tower EtSum", 100,0.,100.);
-  EErhEtSum_ = fs->make<TH1F>( "EErhEtSum", "EE RH tower EtSum", 100,0.,100.);
-  EEtpEtSum_ = fs->make<TH1F>( "EEtpEtSum", "EE TP tower EtSum", 100,0.,100.);
+  EBrhEtSum_ = fs->make<TH1F>( "EBrhEtSum", "EB RH tower EtSum", 100,0.,500.);
+  EBtpEtSum_ = fs->make<TH1F>( "EBtpEtSum", "EB TP tower EtSum", 100,0.,500.);
+  EErhEtSum_ = fs->make<TH1F>( "EErhEtSum", "EE RH tower EtSum", 100,0.,500.);
+  EEtpEtSum_ = fs->make<TH1F>( "EEtpEtSum", "EE TP tower EtSum", 100,0.,500.);
 
-  EBrhEtSumM_ = fs->make<TH1F>( "EBrhEtSumM", "EB RH tower EtSum matched", 100,0.,100.);
-  EBtpEtSumM_ = fs->make<TH1F>( "EBtpEtSumM", "EB TP tower EtSum matched", 100,0.,100.);
-  EErhEtSumM_ = fs->make<TH1F>( "EErhEtSumM", "EE RH tower EtSum matched", 100,0.,100.);
-  EEtpEtSumM_ = fs->make<TH1F>( "EEtpEtSumM", "EE TP tower EtSum matched", 100,0.,100.);
+  EBrhEtSumM_ = fs->make<TH1F>( "EBrhEtSumM", "EB RH tower EtSum matched", 100,0.,500.);
+  EBtpEtSumM_ = fs->make<TH1F>( "EBtpEtSumM", "EB TP tower EtSum matched", 100,0.,500.);
+  EErhEtSumM_ = fs->make<TH1F>( "EErhEtSumM", "EE RH tower EtSum matched", 100,0.,500.);
+  EEtpEtSumM_ = fs->make<TH1F>( "EEtpEtSumM", "EE TP tower EtSum matched", 100,0.,500.);
 
-  EBrhEtSumVSvtx_ = fs->make<TProfile>( "EBrhEtSumVSvtx", "EB RH tower EtSum", numvtx, 0., (float)numvtx, 0., 100.);
-  EBtpEtSumVSvtx_ = fs->make<TProfile>( "EBtpEtSumVSvtx", "EB TP tower EtSum", numvtx, 0., (float)numvtx, 0., 100.);
-  EErhEtSumVSvtx_ = fs->make<TProfile>( "EErhEtSumVSvtx", "EE RH tower EtSum", numvtx, 0., (float)numvtx, 0., 100.);
-  EEtpEtSumVSvtx_ = fs->make<TProfile>( "EEtpEtSumVSvtx", "EE TP tower EtSum", numvtx, 0., (float)numvtx, 0., 100.);
+  EBrhEtSumVSvtx_ = fs->make<TProfile>( "EBrhEtSumVSvtx", "EB RH tower EtSum", numvtx, 0., (float)numvtx, 0., 500.);
+  EBtpEtSumVSvtx_ = fs->make<TProfile>( "EBtpEtSumVSvtx", "EB TP tower EtSum", numvtx, 0., (float)numvtx, 0., 500.);
+  EErhEtSumVSvtx_ = fs->make<TProfile>( "EErhEtSumVSvtx", "EE RH tower EtSum", numvtx, 0., (float)numvtx, 0., 500.);
+  EEtpEtSumVSvtx_ = fs->make<TProfile>( "EEtpEtSumVSvtx", "EE TP tower EtSum", numvtx, 0., (float)numvtx, 0., 500.);
 
-  EBrhEtSumMVSvtx_ = fs->make<TProfile>( "EBrhEtSumMVSvtx", "EB RH tower EtSum matched", numvtx, 0., (float)numvtx, 0., 100.);
-  EBtpEtSumMVSvtx_ = fs->make<TProfile>( "EBtpEtSumMVSvtx", "EB TP tower EtSum matched", numvtx, 0., (float)numvtx, 0., 100.);
-  EErhEtSumMVSvtx_ = fs->make<TProfile>( "EErhEtSumMVSvtx", "EE RH tower EtSum matched", numvtx, 0., (float)numvtx, 0., 100.);
-  EEtpEtSumMVSvtx_ = fs->make<TProfile>( "EEtpEtSumMVSvtx", "EE TP tower EtSum matched", numvtx, 0., (float)numvtx, 0., 100.);
+  EBrhEtSumMVSvtx_ = fs->make<TProfile>( "EBrhEtSumMVSvtx", "EB RH tower EtSum matched", numvtx, 0., (float)numvtx, 0., 500.);
+  EBtpEtSumMVSvtx_ = fs->make<TProfile>( "EBtpEtSumMVSvtx", "EB TP tower EtSum matched", numvtx, 0., (float)numvtx, 0., 500.);
+  EErhEtSumMVSvtx_ = fs->make<TProfile>( "EErhEtSumMVSvtx", "EE RH tower EtSum matched", numvtx, 0., (float)numvtx, 0., 500.);
+  EEtpEtSumMVSvtx_ = fs->make<TProfile>( "EEtpEtSumMVSvtx", "EE TP tower EtSum matched", numvtx, 0., (float)numvtx, 0., 500.);
+
+  rhSumVSvtx_ = fs->make<TProfile>( "rhSumVSvtx", "RH tower EtSum vs vtx", numvtx, 0., (float)numvtx, 0., 500.);
+  tpSumVSvtx_ = fs->make<TProfile>( "tpSumVSvtx", "TP tower EtSum vs vtx", numvtx, 0., (float)numvtx, 0., 500.);
+  rhSumMVSvtx_ = fs->make<TProfile>( "rhSumMVSvtx", "RH tower EtSum matched vs vtx", numvtx, 0., (float)numvtx, 0., 500.);
+  tpSumMVSvtx_ = fs->make<TProfile>( "tpSumMVSvtx", "TP tower EtSum matched vs vtx", numvtx, 0., (float)numvtx, 0., 500.);
+
+  rhSumOthEff_ = fs->make<TH1F>( "rhSumOthEff", "RH tower sum over thresold eff vs vtx", numvtx, 0., (float)numvtx);
+  tpSumOthEff_ = fs->make<TH1F>( "tpSumOthEff", "TP tower sum over thresold eff vs vtx", numvtx, 0., (float)numvtx);
+  rhSumOthMEff_ = fs->make<TH1F>( "rhSumOthMEff", "RH tower sum matched over thresold eff vs vtx", numvtx, 0., (float)numvtx);
+  tpSumOthMEff_ = fs->make<TH1F>( "tpSumOthMEff", "TP tower sum matched over thresold eff vs vtx", numvtx, 0., (float)numvtx);
+
+  for ( int ibin = 0; ibin < numvtx; ibin++ ) {
+    Wvtx.push_back(0.);
+    rhOWvtx.push_back(0.);
+    tpOWvtx.push_back(0.);
+    rhOMWvtx.push_back(0.);
+    tpOMWvtx.push_back(0.);
+  }
 
 }
 
@@ -209,7 +262,6 @@ void EcalTPAnalysis::beginJob()
 {
 }
 
-void EcalTPAnalysis::endJob(){return;}
 void EcalTPAnalysis::beginRun(const edm::Run& iRun,const edm::EventSetup& iSetup)
 {
 }
@@ -369,6 +421,13 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
   }
 
+  unsigned int nebrh = 0;
+  unsigned int nebtp = 0;
+  unsigned int neerh = 0;
+  unsigned int neetp = 0;
+  unsigned int nebrhm = 0;
+  unsigned int neerhm = 0;
+
   float tpEBEtSum = 0.;
   float tpEEEtSum = 0.;
   float rhEBEtSum = 0.;
@@ -382,11 +441,14 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   for (unsigned int iPair=0; iPair < ebTowers.size(); iPair++) {
     tpEBEtSum += ebTowers[iPair].first;
     rhEBEtSum += ebTowers[iPair].second;
+    if ( ebTowers[iPair].first > tpEtTh_ ) nebtp++;
+    if ( ebTowers[iPair].second > rhTEtTh_ ) nebrh++;
     if ( (int)nVtx == vtxSel_ ) {
       EBtpEt_->Fill(ebTowers[iPair].first,theWeight);
       EBrhEt_->Fill(ebTowers[iPair].second,theWeight);
     }
     if ( ebTowers[iPair].first > tpEtTh_ && ebTowers[iPair].second > rhTEtTh_ ) { 
+      nebrhm++;
       tpEBEtSumM += ebTowers[iPair].first;
       rhEBEtSumM += ebTowers[iPair].second;
       EBrhVSttM_->Fill(ebTowers[iPair].second,ebTowers[iPair].first,theWeight); 
@@ -411,11 +473,14 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   for (unsigned int iPair=0; iPair < eeTowers.size(); iPair++) {
     tpEEEtSum += eeTowers[iPair].first;
     rhEEEtSum += eeTowers[iPair].second;
+    if ( eeTowers[iPair].first > tpEtTh_ ) neetp++;
+    if ( eeTowers[iPair].second > rhTEtTh_ ) neerh++;
     if ( (int)nVtx == vtxSel_ ) {
       EEtpEt_->Fill(eeTowers[iPair].first,theWeight);
       EErhEt_->Fill(eeTowers[iPair].second,theWeight);
     }
     if ( eeTowers[iPair].first > tpEtTh_ && eeTowers[iPair].second > rhTEtTh_ ) { 
+      neerhm++;
       tpEEEtSumM += eeTowers[iPair].first;
       rhEEEtSumM += eeTowers[iPair].second;
       EErhVSttM_->Fill(eeTowers[iPair].second,eeTowers[iPair].first,theWeight); 
@@ -436,6 +501,24 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EErhEtSumVSvtx_->Fill((int)nVtx,rhEEEtSum,theWeight);
   EEtpEtSumMVSvtx_->Fill((int)nVtx,tpEEEtSumM,theWeight);
   EErhEtSumMVSvtx_->Fill((int)nVtx,rhEEEtSumM,theWeight);
+
+  EBrh_->Fill(nebrh,theWeight);
+  EBtp_->Fill(nebtp,theWeight);
+  EErh_->Fill(neerh,theWeight);
+  EEtp_->Fill(neetp,theWeight);
+  EBrhM_->Fill(nebrhm,theWeight);
+  EErhM_->Fill(neerhm,theWeight);
+
+  Wvtx[nVtx] += theWeight;
+  if ( rhEBEtSum+rhEEEtSum > effTh_ ) rhOWvtx[nVtx] += theWeight;
+  if ( tpEBEtSum+tpEEEtSum > effTh_ ) tpOWvtx[nVtx] += theWeight;
+  if ( rhEBEtSumM+rhEEEtSumM > effTh_ ) rhOMWvtx[nVtx] += theWeight;
+  if ( tpEBEtSumM+tpEEEtSumM > effTh_ ) tpOMWvtx[nVtx] += theWeight;
+
+  rhSumVSvtx_->Fill( (int)nVtx, rhEBEtSum+rhEEEtSum, theWeight );
+  tpSumVSvtx_->Fill( (int)nVtx, tpEBEtSum+tpEEEtSum, theWeight );
+  rhSumMVSvtx_->Fill( (int)nVtx, rhEBEtSumM+rhEEEtSumM, theWeight );
+  tpSumMVSvtx_->Fill( (int)nVtx, tpEBEtSumM+tpEEEtSumM, theWeight );
 
   // unsigned int rhEBnum = 0;
   // unsigned int rhEEnum = 0;
@@ -471,6 +554,42 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
  
 }//analyze
+
+void EcalTPAnalysis::endJob(){
+
+  double eff = 0.;
+  double erreff = 0.;
+  for ( int ivtx = 0; ivtx < numvtx; ivtx++ ) {
+
+    if ( Wvtx[ivtx] > 0. ) { 
+      eff = rhOWvtx[ivtx]/Wvtx[ivtx]; 
+      erreff = std::sqrt(rhOWvtx[ivtx]*(1.-rhOWvtx[ivtx]/Wvtx[ivtx]))/Wvtx[ivtx];
+      rhSumOthEff_->SetBinContent((Int_t)ivtx, eff);
+      rhSumOthEff_->SetBinError((Int_t)ivtx, erreff);
+      
+      //      std::cout << "iVtx = " << ivtx << " W = " << Wvtx[ivtx] << " RHW = " << rhOWvtx[ivtx] << " eff = " << eff << " +/- " << erreff << std::endl;
+
+      eff = tpOWvtx[ivtx]/Wvtx[ivtx]; 
+      erreff = std::sqrt(tpOWvtx[ivtx]*(1.-tpOWvtx[ivtx]/Wvtx[ivtx]))/Wvtx[ivtx];
+      tpSumOthEff_->SetBinContent((Int_t)ivtx, eff);
+      tpSumOthEff_->SetBinError((Int_t)ivtx, erreff);
+
+      eff = rhOMWvtx[ivtx]/Wvtx[ivtx]; 
+      erreff = std::sqrt(rhOMWvtx[ivtx]*(1.-rhOMWvtx[ivtx]/Wvtx[ivtx]))/Wvtx[ivtx];
+      rhSumOthMEff_->SetBinContent((Int_t)ivtx, eff);
+      rhSumOthMEff_->SetBinError((Int_t)ivtx, erreff);
+
+      eff = tpOMWvtx[ivtx]/Wvtx[ivtx]; 
+      erreff = std::sqrt(tpOMWvtx[ivtx]*(1.-tpOMWvtx[ivtx]/Wvtx[ivtx]))/Wvtx[ivtx];
+      tpSumOthMEff_->SetBinContent((Int_t)ivtx, eff);
+      tpSumOthMEff_->SetBinError((Int_t)ivtx, erreff);
+
+    }
+    
+  }
+
+}
+
 
 
 //define this as a plug-in
