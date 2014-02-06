@@ -373,6 +373,8 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
         if ( myRecHit != EBRecHit->end() ) {
 
+          rhEBass++;
+
           // Quality selection on ECAL rec hits
           Bool_t is_spike=false;
           if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
@@ -386,13 +388,14 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
           float  theta=theBarrelGeometry->getGeometry(myid)->getPosition().theta();
           //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
-          rhEBass++;
         }
       }
       else if ( subdet == 2 ) {
         EEDetId myid(recTow[iRec]);
         EcalRecHitCollection::const_iterator myRecHit = EERecHit->find(myid);
         if ( myRecHit != EERecHit->end() ) {
+
+          rhEEass++;
 
           // Quality selection on ECAL rec hits
           Bool_t is_spike=false;
@@ -407,7 +410,6 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
           float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
           //          std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
-          rhEEass++;
         }
       }
 
@@ -439,13 +441,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   float rhEEEtSumM = 0.;
 
   for (unsigned int iPair=0; iPair < ebTowers.size(); iPair++) {
-    tpEBEtSum += ebTowers[iPair].first;
-    rhEBEtSum += ebTowers[iPair].second;
-    if ( ebTowers[iPair].first > tpEtTh_ ) nebtp++;
-    if ( ebTowers[iPair].second > rhTEtTh_ ) nebrh++;
+    if ( ebTowers[iPair].first > tpEtTh_ ) { nebtp++; rhEBEtSum += ebTowers[iPair].second; }
+    if ( ebTowers[iPair].second > rhTEtTh_ ) { nebrh++; rhEBEtSum += ebTowers[iPair].second; }
     if ( (int)nVtx == vtxSel_ ) {
-      EBtpEt_->Fill(ebTowers[iPair].first,theWeight);
-      EBrhEt_->Fill(ebTowers[iPair].second,theWeight);
+      if ( ebTowers[iPair].first > tpEtTh_ ) EBtpEt_->Fill(ebTowers[iPair].first,theWeight);
+      if ( ebTowers[iPair].second > rhTEtTh_ ) EBrhEt_->Fill(ebTowers[iPair].second,theWeight);
     }
     if ( ebTowers[iPair].first > tpEtTh_ && ebTowers[iPair].second > rhTEtTh_ ) { 
       nebrhm++;
@@ -471,13 +471,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EBrhEtSumMVSvtx_->Fill((int)nVtx,rhEBEtSumM,theWeight);
  
   for (unsigned int iPair=0; iPair < eeTowers.size(); iPair++) {
-    tpEEEtSum += eeTowers[iPair].first;
-    rhEEEtSum += eeTowers[iPair].second;
-    if ( eeTowers[iPair].first > tpEtTh_ ) neetp++;
-    if ( eeTowers[iPair].second > rhTEtTh_ ) neerh++;
+    if ( eeTowers[iPair].first > tpEtTh_ ) { neetp++; tpEEEtSum += eeTowers[iPair].first; }
+    if ( eeTowers[iPair].second > rhTEtTh_ ) { neerh++; rhEEEtSum += eeTowers[iPair].second; }
     if ( (int)nVtx == vtxSel_ ) {
-      EEtpEt_->Fill(eeTowers[iPair].first,theWeight);
-      EErhEt_->Fill(eeTowers[iPair].second,theWeight);
+      if ( eeTowers[iPair].first > tpEtTh_ ) EEtpEt_->Fill(eeTowers[iPair].first,theWeight);
+      if ( eeTowers[iPair].first > tpEtTh_ ) EErhEt_->Fill(eeTowers[iPair].second,theWeight);
     }
     if ( eeTowers[iPair].first > tpEtTh_ && eeTowers[iPair].second > rhTEtTh_ ) { 
       neerhm++;
@@ -520,6 +518,8 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   rhSumMVSvtx_->Fill( (int)nVtx, rhEBEtSumM+rhEEEtSumM, theWeight );
   tpSumMVSvtx_->Fill( (int)nVtx, tpEBEtSumM+tpEEEtSumM, theWeight );
 
+  // check for rechits presence independent on TP one
+
   // unsigned int rhEBnum = 0;
   // unsigned int rhEEnum = 0;
   // unsigned int rhEBnumTT = 0;
@@ -546,10 +546,10 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
   // std::cout << "\n" << std::endl;
   // std::cout << "EB: tot RH = " << rhEBTotEt << " TP Et sum = " << tpEBEtSum << " RH Et sum = " << rhEBEtSum << std::endl;
-  // if ( rhEBnum != rhEBnumTT || rhEBnumTT != rhEBass )  std::cout << "EB rechit # = " << rhEBnum << " associated # = " << rhEBnumTT << " found in TT = " << rhEBass << std::endl;
+  //  if ( rhEBnum != rhEBnumTT || rhEBnumTT != rhEBass )  std::cout << "EB rechit # = " << rhEBnum << " associated # = " << rhEBnumTT << " found in TT = " << rhEBass << std::endl;
   // std::cout << "\n" << std::endl;
   // std::cout << "EE: tot RH = " << rhEETotEt << " TP Et sum = " << tpEEEtSum << " RH Et sum = " << rhEEEtSum << std::endl;
-  // if ( rhEEnum != rhEEnumTT || rhEEnumTT != rhEEass )  std::cout << "EE rechit # = " << rhEEnum << " associated # = " << rhEEnumTT << " found in TT = " << rhEEass << std::endl;
+  //  if ( rhEEnum != rhEEnumTT || rhEEnumTT != rhEEass )  std::cout << "EE rechit # = " << rhEEnum << " associated # = " << rhEEnumTT << " found in TT = " << rhEEass << std::endl;
   // std::cout << "\n" << std::endl;
 
  
