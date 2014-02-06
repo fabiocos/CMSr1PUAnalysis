@@ -304,6 +304,17 @@ root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","ETTvsCT.pdf","l1CaloAnalysis","ETTvsCT",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
 
 
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrh.pdf","ecalTPAnalysis","EBrh",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBtp.pdf","ecalTPAnalysis","EBtp",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErh.pdf","ecalTPAnalysis","EErh",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtp.pdf","ecalTPAnalysis","EEtp",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrhM.pdf","ecalTPAnalysis","EBrhM",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErhM.pdf","ecalTPAnalysis","EErhM",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
 
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","vtx_TP.pdf","ecalTPAnalysis","vtx",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
 
@@ -354,5 +365,21 @@ root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErhEtSumMVSvtx.pdf","ecalTPAnalysis","EErhEtSumMVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
 
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtpEtSumMVSvtx.pdf","ecalTPAnalysis","EEtpEtSumMVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","rhSumVSvtx.pdf","ecalTPAnalysis","rhSumVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","tpSumVSvtx.pdf","ecalTPAnalysis","tpSumVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","rhSumMVSvtx.pdf","ecalTPAnalysis","rhSumMVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","tpSumMVSvtx.pdf","ecalTPAnalysis","tpSumMVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","rhSumOthEff.pdf","ecalTPAnalysis","rhSumOthEff",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","tpSumOthEff.pdf","ecalTPAnalysis","tpSumOthEff",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","rhSumMOthEff.pdf","ecalTPAnalysis","rhSumMOthEff",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
+
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","tpSumMOthEff.pdf","ecalTPAnalysis","tpSumMOthEff",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
 
 
