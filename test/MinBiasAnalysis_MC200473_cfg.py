@@ -406,6 +406,7 @@ process.ecalTPAnalysis = cms.EDAnalyzer("EcalTPAnalysis",
         mcPUHisto = cms.untracked.string("monitorPUSummaryInfo/nTruePU")
     )
 )
+process.ecalTPAnalysis.tpCollection = cms.InputTag("simEcalTriggerPrimitiveDigis")
 
 process.MessageLogger.categories=cms.untracked.vstring('FwkJob'
                                                       ,'FwkReport'
