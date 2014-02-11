@@ -356,7 +356,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
     const EcalTrigTowerDetId TPtowid= d.id();
 
     // Reject spikes in TP 
-    if ( subdet == 1 && d.sFGVB() == 0 ) continue;
+    //    if ( subdet == 1 && d.sFGVB() == 0 ) continue;
 
     float tpEt = ecalScale.getTPGInGeV(d.compressedEt(), TPtowid) ; 
     if (d.id().ietaAbs()==27 || d.id().ietaAbs()==28)    tpEt*=2;
