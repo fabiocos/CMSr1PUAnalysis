@@ -334,21 +334,21 @@ root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12
 
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtMpEtM.pdf","ecalTPAnalysis","EEtpEtM",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrhEtSum.pdf","ecalTPAnalysis","EBrhEtSum",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrhEtSum.pdf","ecalTPAnalysis","EBrhEtSum",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBtpEtSum.pdf","ecalTPAnalysis","EBtpEtSum",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBtpEtSum.pdf","ecalTPAnalysis","EBtpEtSum",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErhEtSum.pdf","ecalTPAnalysis","EErhEtSum",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErhEtSum.pdf","ecalTPAnalysis","EErhEtSum",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtpEtSum.pdf","ecalTPAnalysis","EEtpEtSum",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtpEtSum.pdf","ecalTPAnalysis","EEtpEtSum",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrhEtSumM.pdf","ecalTPAnalysis","EBrhEtSumM",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrhEtSumM.pdf","ecalTPAnalysis","EBrhEtSumM",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBtpEtSumM.pdf","ecalTPAnalysis","EBtpEtSumM",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBtpEtSumM.pdf","ecalTPAnalysis","EBtpEtSumM",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErhEtSumM.pdf","ecalTPAnalysis","EErhEtSumM",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EErhEtSumM.pdf","ecalTPAnalysis","EErhEtSumM",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
-root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtMpEtSumM.pdf","ecalTPAnalysis","EEtpEtSumM",true,"E1",false,true,false,0.,0.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
+root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EEtMpEtSumM.pdf","ecalTPAnalysis","EEtpEtSumM",true,"E1",false,true,false,0.,100.,0.,0.,true,false,4146.,9633.,-1.,-1.,"BR")'
 
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","Summer12 best","four.root","Summer12 PU best","EBrhEtSumVSvtx.pdf","ecalTPAnalysis","EBrhEtSumVSvtx",false,"E1",false,false,false,0.,0.,0.,0.,false,false,1.,1.,1.,1.,"BR")'
 

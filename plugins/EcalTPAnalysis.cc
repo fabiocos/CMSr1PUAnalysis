@@ -216,15 +216,15 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   EErhEtM_ = fs->make<TH1F>( "EErhEtM", "EE RH tower Et matched", 100,0.,100.);
   EEtpEtM_ = fs->make<TH1F>( "EEtpEtM", "EE TP tower Et matched", 100,0.,100.);
 
-  EBrhEtSum_ = fs->make<TH1F>( "EBrhEtSum", "EB RH tower EtSum", 100,0.,500.);
-  EBtpEtSum_ = fs->make<TH1F>( "EBtpEtSum", "EB TP tower EtSum", 100,0.,500.);
-  EErhEtSum_ = fs->make<TH1F>( "EErhEtSum", "EE RH tower EtSum", 100,0.,500.);
-  EEtpEtSum_ = fs->make<TH1F>( "EEtpEtSum", "EE TP tower EtSum", 100,0.,500.);
+  EBrhEtSum_ = fs->make<TH1F>( "EBrhEtSum", "EB RH tower EtSum", 100,0.,100.);
+  EBtpEtSum_ = fs->make<TH1F>( "EBtpEtSum", "EB TP tower EtSum", 100,0.,100.);
+  EErhEtSum_ = fs->make<TH1F>( "EErhEtSum", "EE RH tower EtSum", 100,0.,100.);
+  EEtpEtSum_ = fs->make<TH1F>( "EEtpEtSum", "EE TP tower EtSum", 100,0.,100.);
 
-  EBrhEtSumM_ = fs->make<TH1F>( "EBrhEtSumM", "EB RH tower EtSum matched", 100,0.,500.);
-  EBtpEtSumM_ = fs->make<TH1F>( "EBtpEtSumM", "EB TP tower EtSum matched", 100,0.,500.);
-  EErhEtSumM_ = fs->make<TH1F>( "EErhEtSumM", "EE RH tower EtSum matched", 100,0.,500.);
-  EEtpEtSumM_ = fs->make<TH1F>( "EEtpEtSumM", "EE TP tower EtSum matched", 100,0.,500.);
+  EBrhEtSumM_ = fs->make<TH1F>( "EBrhEtSumM", "EB RH tower EtSum matched", 100,0.,100.);
+  EBtpEtSumM_ = fs->make<TH1F>( "EBtpEtSumM", "EB TP tower EtSum matched", 100,0.,100.);
+  EErhEtSumM_ = fs->make<TH1F>( "EErhEtSumM", "EE RH tower EtSum matched", 100,0.,100.);
+  EEtpEtSumM_ = fs->make<TH1F>( "EEtpEtSumM", "EE TP tower EtSum matched", 100,0.,100.);
 
   EBrhEtSumVSvtx_ = fs->make<TProfile>( "EBrhEtSumVSvtx", "EB RH tower EtSum", numvtx, 0., (float)numvtx, 0., 500.);
   EBtpEtSumVSvtx_ = fs->make<TProfile>( "EBtpEtSumVSvtx", "EB TP tower EtSum", numvtx, 0., (float)numvtx, 0., 500.);
@@ -441,7 +441,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   float rhEEEtSumM = 0.;
 
   for (unsigned int iPair=0; iPair < ebTowers.size(); iPair++) {
-    if ( ebTowers[iPair].first > tpEtTh_ ) { nebtp++; rhEBEtSum += ebTowers[iPair].second; }
+    if ( ebTowers[iPair].first > tpEtTh_ ) { nebtp++; tpEBEtSum += ebTowers[iPair].second; }
     if ( ebTowers[iPair].second > rhTEtTh_ ) { nebrh++; rhEBEtSum += ebTowers[iPair].second; }
     if ( (int)nVtx == vtxSel_ ) {
       if ( ebTowers[iPair].first > tpEtTh_ ) EBtpEt_->Fill(ebTowers[iPair].first,theWeight);
