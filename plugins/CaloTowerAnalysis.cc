@@ -217,7 +217,7 @@ CaloTowerAnalysis::CaloTowerAnalysis(const edm::ParameterSet& iPSet):
   CTEhadSumETVSvtx_ = fs->make<TProfile>( "CTEhadSumETVSvtx", "CaloTower endcap had sum ET VS Vtx", numvtx, 0., (float)numvtx, 0., 500.); 
   CTEtotSumETVSvtx_ = fs->make<TProfile>( "CTEtotSumETVSvtx", "CaloTower endcap tot sum ET VS Vtx", numvtx, 0., (float)numvtx, 0., 500.); 
 
-  CTFmultiHisto_ = fs->make<TH1F>( "CTFmulti", "CaloTower forward multiplicity", 50, 0., 200. ); 
+  CTFmultiHisto_ = fs->make<TH1F>( "CTFmulti", "CaloTower forward multiplicity", 125, 0., 500. ); 
 
   CTFemEHisto_ = fs->make<TH1F>( "CTFemE", "CaloTower forward em energy", 100, 0., 100. ); 
   CTFhadEHisto_ = fs->make<TH1F>( "CTFhadE", "CaloTower forward had energy", 100, 0., 100. ); 

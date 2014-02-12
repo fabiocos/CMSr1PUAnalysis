@@ -462,8 +462,8 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   if ( (int)nVtx == vtxSel_ ) {
     EBtpEtSum_->Fill(tpEBEtSum,theWeight);
     EBrhEtSum_->Fill(rhEBEtSum,theWeight);
-    EBtpEtSumM_->Fill(tpEEEtSumM,theWeight);
-    EBrhEtSumM_->Fill(rhEEEtSumM,theWeight);
+    EBtpEtSumM_->Fill(tpEBEtSumM,theWeight);
+    EBrhEtSumM_->Fill(rhEBEtSumM,theWeight);
   }
   EBtpEtSumVSvtx_->Fill((int)nVtx,tpEBEtSum,theWeight);
   EBrhEtSumVSvtx_->Fill((int)nVtx,rhEBEtSum,theWeight);
