@@ -54,11 +54,37 @@
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 
+#include "DataFormats/Common/interface/SortedCollection.h"
+
 #include "CLHEP/Vector/ThreeVector.h"
 
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"
+
+class TTower
+{
+
+public:
+
+  typedef EcalTrigTowerDetId key_type;
+
+  TTower( const EcalTrigTowerDetId myId, std::pair<float,float> myValue ):
+    theId_(myId),theValue_(myValue)
+  {}
+
+  virtual ~TTower(){};
+
+  EcalTrigTowerDetId id() { return theId_; }
+  std::pair<float,float> value() { return theValue_; }
+
+private:
+
+  EcalTrigTowerDetId theId_;
+  std::pair<float,float> theValue_;
+
+}; 
+
 
 class EcalTPAnalysis : public edm::EDAnalyzer
 {
@@ -71,6 +97,8 @@ public:
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void beginRun(const edm::Run&, const edm::EventSetup&);
   virtual void endRun(const edm::Run&, const edm::EventSetup&);
+
+  const EcalRecHit * giveGoodHit( const DetId & theId ) const;  
   
 private:
   
@@ -100,8 +128,8 @@ private:
   TH1F * truePUreweHisto_;
   TH1F * weightHisto_;
 
-  std::vector< std::pair<float,float> > ebTowers;
-  std::vector <std::pair<float,float> > eeTowers;
+  //  std::vector< std::pair<float,float> > ebTowers;
+  //  std::vector <std::pair<float,float> > eeTowers;
 
   TH2F * EBrhVStp_;
   TH2F * EErhVStp_;
@@ -169,6 +197,24 @@ private:
   TH1F * tpSumOthEff_;
   TH1F * rhSumOthMEff_;
   TH1F * tpSumOthMEff_;
+
+  TProfile * EBMatchEffVSvtx_;
+  TProfile * EEMatchEffVSvtx_;
+
+  TH1F * EBhitEtM_;
+  TH1F * EEhitEtM_;
+  TH1F * EBhitEtnoM_;
+  TH1F * EEhitEtnoM_;
+
+  TH1F * EBhitTimeM_;
+  TH1F * EEhitTimeM_;
+  TH1F * EBhitTimenoM_;
+  TH1F * EEhitTimenoM_;
+
+  const EBRecHitCollection * EBRecHit; 
+  const EERecHitCollection * EERecHit; 
+  const EcalChannelStatus* cstat;
+  const CaloSubdetectorGeometry *theEndcapGeometry,*theBarrelGeometry;
 
 };
 
@@ -268,6 +314,19 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   rhSumOthMEff_ = fs->make<TH1F>( "rhSumOthMEff", "RH tower sum matched over thresold eff vs vtx", numvtx, 0., (float)numvtx);
   tpSumOthMEff_ = fs->make<TH1F>( "tpSumOthMEff", "TP tower sum matched over thresold eff vs vtx", numvtx, 0., (float)numvtx);
 
+  EBMatchEffVSvtx_ = fs->make<TProfile>( "EBMatchEffVSvtx", "EB RH tower sum match eff vs vtx", numvtx, 0., (float)numvtx, 0., 1.);
+  EEMatchEffVSvtx_ = fs->make<TProfile>( "EEMatchEffVSvtx", "EE RH tower sum match eff vs vtx", numvtx, 0., (float)numvtx, 0., 1.);
+
+  EBhitEtM_ = fs->make<TH1F>( "EBhitEtM", "EB matched rechit Et", 100, 0., 50.); 
+  EEhitEtM_ = fs->make<TH1F>( "EEhitEtM", "EE matched rechit Et", 100, 0., 50.); 
+  EBhitEtnoM_ = fs->make<TH1F>( "EBhitEtnoM", "EB unmatched rechit Et", 100, 0., 50.); 
+  EEhitEtnoM_ = fs->make<TH1F>( "EEhitEtnoM", "EE unmatched rechit Et", 100, 0., 50.); 
+
+  EBhitTimeM_ = fs->make<TH1F>( "EBhitTimeM", "EB matched rechit Time", 120, -60., 60.); 
+  EEhitTimeM_ = fs->make<TH1F>( "EEhitTimeM", "EE matched rechit Time", 120, -60., 60.); 
+  EBhitTimenoM_ = fs->make<TH1F>( "EBhitTimenoM", "EB unmatched rechit Time", 120, -60., 60.); 
+  EEhitTimenoM_ = fs->make<TH1F>( "EEhitTimenoM", "EE unmatched rechit Time", 120, -60., 60.); 
+
   for ( int ibin = 0; ibin < numvtx; ibin++ ) {
     Wvtx.push_back(0.);
     rhOWvtx.push_back(0.);
@@ -337,11 +396,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
   edm::Handle<EcalRecHitCollection> rechit_EB_col;
   iEvent.getByLabel(ebRecHitCollection_,rechit_EB_col);
-  const EBRecHitCollection * EBRecHit = rechit_EB_col.product();
+  EBRecHit = rechit_EB_col.product();
 
   edm::Handle<EcalRecHitCollection> rechit_EE_col;
   iEvent.getByLabel(eeRecHitCollection_,rechit_EE_col);
-  const EERecHitCollection * EERecHit = rechit_EE_col.product();
+  EERecHit = rechit_EE_col.product();
   
 
   edm::ESHandle<CaloGeometry> theGeometry;
@@ -351,7 +410,6 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   iSetup.get<EcalEndcapGeometryRecord>().get("EcalEndcap",theEndcapGeometry_handle);
   iSetup.get<EcalBarrelGeometryRecord>().get("EcalBarrel",theBarrelGeometry_handle);
 
-  const CaloSubdetectorGeometry *theEndcapGeometry,*theBarrelGeometry;
   theEndcapGeometry = &(*theEndcapGeometry_handle);
   theBarrelGeometry = &(*theBarrelGeometry_handle);
   edm::ESHandle<EcalTrigTowerConstituentsMap> eTTmap_;
@@ -359,13 +417,16 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
   edm::ESHandle<EcalChannelStatus> chanstat;
   iSetup.get<EcalChannelStatusRcd>().get(chanstat);
-  const EcalChannelStatus* cstat=chanstat.product();      
+  cstat=chanstat.product();      
 
   EcalTPGScale ecalScale ;
   ecalScale.setEventSetup(iSetup) ;
 
-  ebTowers.clear();
-  eeTowers.clear();
+  //  ebTowers.clear();
+  //  eeTowers.clear();
+
+  edm::SortedCollection< TTower > ebTowers;
+  edm::SortedCollection< TTower > eeTowers;
 
   unsigned int rhEBass = 0;
   unsigned int rhEEass = 0;
@@ -390,56 +451,41 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
     for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
 
       if ( subdet == 1 ) {
-        EBDetId myid(recTow[iRec]);
-        EcalRecHitCollection::const_iterator myRecHit = EBRecHit->find(myid);
 
-        if ( myRecHit != EBRecHit->end() ) {
+        EBDetId myid(recTow[iRec]);
+        const EcalRecHit * myRecHit = giveGoodHit( recTow[iRec] );
+
+        if ( myRecHit != 0 ) {
 
           rhEBass++;
-
-          // Quality selection on ECAL rec hits
-          Bool_t is_spike=false;
-          if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
-          int chanstatus=-1;
-          EcalChannelStatus::const_iterator chIt = cstat->find( myRecHit->id() );
-          if ( chIt != cstat->end() ) {
-            chanstatus = chIt->getStatusCode() & 0x1F;
-          }
-          if (is_spike || chanstatus!=0) continue;
 
           float  theta=theBarrelGeometry->getGeometry(myid)->getPosition().theta();
           //std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
+
         }
       }
       else if ( subdet == 2 ) {
+
         EEDetId myid(recTow[iRec]);
-        EcalRecHitCollection::const_iterator myRecHit = EERecHit->find(myid);
-        if ( myRecHit != EERecHit->end() ) {
+        const EcalRecHit * myRecHit = giveGoodHit( recTow[iRec] );
+        if ( myRecHit != 0 ) {
 
           rhEEass++;
-
-          // Quality selection on ECAL rec hits
-          Bool_t is_spike=false;
-          if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
-          int chanstatus=-1;
-          EcalChannelStatus::const_iterator chIt = cstat->find( myRecHit->id() );
-          if ( chIt != cstat->end() ) {
-            chanstatus = chIt->getStatusCode() & 0x1F;
-          }
-          if (is_spike || chanstatus!=0) continue;
 
           float  theta=theEndcapGeometry->getGeometry(myid)->getPosition().theta();
           //          std::cout << (*myRecHit) << " " << myRecHit->energy()*std::sin(theta) << std::endl;
           rhEt += myRecHit->energy()*std::sin(theta);
+
         }
       }
 
     }
 
     std::pair<float,float> thisTower(tpEt,rhEt);
-    if (subdet == 1 ) ebTowers.push_back(thisTower);
-    if (subdet == 2 ) eeTowers.push_back(thisTower); 
+    TTower myTower(TPtowid,thisTower);
+    if (subdet == 1 ) ebTowers.push_back(myTower);
+    if (subdet == 2 ) eeTowers.push_back(myTower);
 
     //    std::cout << "SubD = " << subdet << " RH size = " << recTow.size() << " TP Et = " << tpEt << " RH Et = " << rhEt << std::endl; 
 
@@ -463,24 +509,51 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   float rhEEEtSumM = 0.;
 
   for (unsigned int iPair=0; iPair < ebTowers.size(); iPair++) {
-    EBrhVStp_->Fill(ebTowers[iPair].second,ebTowers[iPair].first,theWeight); 
-    EBdiffVStp_->Fill(ebTowers[iPair].second,ebTowers[iPair].first-ebTowers[iPair].second,theWeight); 
-    if ( ebTowers[iPair].first > tpEtTh_ ) { nebtp++; tpEBEtSum += ebTowers[iPair].second; }
-    if ( ebTowers[iPair].second > rhTEtTh_ ) { nebrh++; rhEBEtSum += ebTowers[iPair].second; }
+    EBrhVStp_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first,theWeight); 
+    EBdiffVStp_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first-ebTowers[iPair].value().second,theWeight); 
+    if ( ebTowers[iPair].value().first > tpEtTh_ ) { nebtp++; tpEBEtSum += ebTowers[iPair].value().second; }
+    if ( ebTowers[iPair].value().second > rhTEtTh_ ) { nebrh++; rhEBEtSum += ebTowers[iPair].value().second; }
     if ( (int)nVtx == vtxSel_ ) {
-      if ( ebTowers[iPair].first > tpEtTh_ ) EBtpEt_->Fill(ebTowers[iPair].first,theWeight);
-      if ( ebTowers[iPair].second > rhTEtTh_ ) EBrhEt_->Fill(ebTowers[iPair].second,theWeight);
+      if ( ebTowers[iPair].value().first > tpEtTh_ ) EBtpEt_->Fill(ebTowers[iPair].value().first,theWeight);
+      if ( ebTowers[iPair].value().second > rhTEtTh_ ) EBrhEt_->Fill(ebTowers[iPair].value().second,theWeight);
     }
-    if ( ebTowers[iPair].first > tpEtTh_ && ebTowers[iPair].second > rhTEtTh_ ) { 
-      EBdiffVStpM_->Fill(ebTowers[iPair].second,ebTowers[iPair].first-ebTowers[iPair].second,theWeight); 
+
+    std::vector<DetId> recTow((*eTTmap_).constituentsOf(ebTowers[iPair].id()));
+
+    if ( ebTowers[iPair].value().first > tpEtTh_ && ebTowers[iPair].value().second > rhTEtTh_ ) { 
+      EBdiffVStpM_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first-ebTowers[iPair].value().second,theWeight); 
       nebrhm++;
-      tpEBEtSumM += ebTowers[iPair].first;
-      rhEBEtSumM += ebTowers[iPair].second;
+      tpEBEtSumM += ebTowers[iPair].value().first;
+      rhEBEtSumM += ebTowers[iPair].value().second;
       if ( (int)nVtx == vtxSel_ ) {
-        EBtpEtM_->Fill(ebTowers[iPair].first,theWeight);
-        EBrhEtM_->Fill(ebTowers[iPair].second,theWeight);
+        EBtpEtM_->Fill(ebTowers[iPair].value().first,theWeight);
+        EBrhEtM_->Fill(ebTowers[iPair].value().second,theWeight);
+      }
+      
+      for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
+        const EcalRecHit * myRecHit = giveGoodHit( recTow[iRec] );
+        if ( myRecHit != 0 ) {
+          float et = myRecHit->energy()*std::sin(theBarrelGeometry->getGeometry(EBDetId(recTow[iRec]))->getPosition().theta());
+          float time = myRecHit->time();
+          EBhitEtM_->Fill(et,theWeight);
+          EBhitTimeM_->Fill(time,theWeight);
+        }
+      }
+
+    }
+    else if ( ebTowers[iPair].value().second > rhTEtTh_ ) {
+      
+      for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
+        const EcalRecHit * myRecHit = giveGoodHit( recTow[iRec] );
+        if ( myRecHit != 0 ) {
+          float et = myRecHit->energy()*std::sin(theBarrelGeometry->getGeometry(EBDetId(recTow[iRec]))->getPosition().theta());
+          float time = myRecHit->time();
+          EBhitEtnoM_->Fill(et,theWeight);
+          EBhitTimenoM_->Fill(time,theWeight);
+        }
       }
     }
+
   }
 
   if ( (int)nVtx == vtxSel_ ) {
@@ -493,25 +566,54 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EBrhEtSumVSvtx_->Fill((int)nVtx,rhEBEtSum,theWeight);
   EBtpEtSumMVSvtx_->Fill((int)nVtx,tpEBEtSumM,theWeight);
   EBrhEtSumMVSvtx_->Fill((int)nVtx,rhEBEtSumM,theWeight);
+
+  if ( nebrh > 0 ) EBMatchEffVSvtx_->Fill((int)nVtx,(float)nebrhm/(float)nebrh, theWeight);
  
   for (unsigned int iPair=0; iPair < eeTowers.size(); iPair++) {
-    EErhVStp_->Fill(eeTowers[iPair].second,eeTowers[iPair].first,theWeight); 
-    EEdiffVStp_->Fill(eeTowers[iPair].second,eeTowers[iPair].first-eeTowers[iPair].second,theWeight); 
-    if ( eeTowers[iPair].first > tpEtTh_ ) { neetp++; tpEEEtSum += eeTowers[iPair].first; }
-    if ( eeTowers[iPair].second > rhTEtTh_ ) { neerh++; rhEEEtSum += eeTowers[iPair].second; }
+    EErhVStp_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first,theWeight); 
+    EEdiffVStp_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first-eeTowers[iPair].value().second,theWeight); 
+    if ( eeTowers[iPair].value().first > tpEtTh_ ) { neetp++; tpEEEtSum += eeTowers[iPair].value().first; }
+    if ( eeTowers[iPair].value().second > rhTEtTh_ ) { neerh++; rhEEEtSum += eeTowers[iPair].value().second; }
     if ( (int)nVtx == vtxSel_ ) {
-      if ( eeTowers[iPair].first > tpEtTh_ ) EEtpEt_->Fill(eeTowers[iPair].first,theWeight);
-      if ( eeTowers[iPair].first > tpEtTh_ ) EErhEt_->Fill(eeTowers[iPair].second,theWeight);
+      if ( eeTowers[iPair].value().first > tpEtTh_ ) EEtpEt_->Fill(eeTowers[iPair].value().first,theWeight);
+      if ( eeTowers[iPair].value().first > tpEtTh_ ) EErhEt_->Fill(eeTowers[iPair].value().second,theWeight);
     }
-    if ( eeTowers[iPair].first > tpEtTh_ && eeTowers[iPair].second > rhTEtTh_ ) { 
-      EEdiffVStpM_->Fill(eeTowers[iPair].second,eeTowers[iPair].first-eeTowers[iPair].second,theWeight); 
+
+    std::vector<DetId> recTow((*eTTmap_).constituentsOf(eeTowers[iPair].id()));
+
+    if ( eeTowers[iPair].value().first > tpEtTh_ && eeTowers[iPair].value().second > rhTEtTh_ ) { 
+      EEdiffVStpM_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first-eeTowers[iPair].value().second,theWeight); 
       neerhm++;
-      tpEEEtSumM += eeTowers[iPair].first;
-      rhEEEtSumM += eeTowers[iPair].second;
+      tpEEEtSumM += eeTowers[iPair].value().first;
+      rhEEEtSumM += eeTowers[iPair].value().second;
       if ( (int)nVtx == vtxSel_ ) {
-        EEtpEtM_->Fill(eeTowers[iPair].first,theWeight);
-        EErhEtM_->Fill(eeTowers[iPair].second,theWeight);
+        EEtpEtM_->Fill(eeTowers[iPair].value().first,theWeight);
+        EErhEtM_->Fill(eeTowers[iPair].value().second,theWeight);
       }
+      
+      for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
+        const EcalRecHit * myRecHit = giveGoodHit( recTow[iRec] );
+        if ( myRecHit != 0 ) {
+          float et = myRecHit->energy()*std::sin(theEndcapGeometry->getGeometry(EEDetId(recTow[iRec]))->getPosition().theta());
+          float time = myRecHit->time();
+          EEhitEtM_->Fill(et,theWeight);
+          EEhitTimeM_->Fill(time,theWeight);
+        }
+      }
+
+    }
+    else if ( ebTowers[iPair].value().second > rhTEtTh_ ) {
+      
+      for (unsigned int iRec=0; iRec < recTow.size(); iRec++) {
+        const EcalRecHit * myRecHit = giveGoodHit( recTow[iRec] );
+        if ( myRecHit != 0 ) {
+          float et = myRecHit->energy()*std::sin(theEndcapGeometry->getGeometry(EEDetId(recTow[iRec]))->getPosition().theta());
+          float time = myRecHit->time();
+          EEhitEtnoM_->Fill(et,theWeight);
+          EEhitTimenoM_->Fill(time,theWeight);
+        }
+      }
+
     }
   }
 
@@ -526,6 +628,8 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EEtpEtSumMVSvtx_->Fill((int)nVtx,tpEEEtSumM,theWeight);
   EErhEtSumMVSvtx_->Fill((int)nVtx,rhEEEtSumM,theWeight);
 
+  if ( neerh > 0 ) EEMatchEffVSvtx_->Fill((int)nVtx,(float)neerhm/(float)neerh, theWeight);
+  
   EBrh_->Fill(nebrh,theWeight);
   EBtp_->Fill(nebtp,theWeight);
   EErh_->Fill(neerh,theWeight);
@@ -623,7 +727,56 @@ void EcalTPAnalysis::endJob(){
 
 }
 
+const EcalRecHit * EcalTPAnalysis::giveGoodHit( const DetId & theId ) const {
 
+  int subdet(theId.subdetId());
+
+  const EcalRecHit * thisHit(0);
+
+  //  std::cout << "SubDet " << subdet << std::endl;
+  
+  if ( subdet == 1 ) {
+
+    EBDetId myid(theId);
+    EcalRecHitCollection::const_iterator myRecHit = EBRecHit->find(myid);
+
+    if ( myRecHit != EBRecHit->end() ) {
+      
+      // Quality selection on ECAL rec hits
+      Bool_t is_spike=false;
+      if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
+      int chanstatus=-1;
+      EcalChannelStatus::const_iterator chIt = cstat->find( myRecHit->id() );
+      if ( chIt != cstat->end() ) {
+        chanstatus = chIt->getStatusCode() & 0x1F;
+      }
+      if (!is_spike && chanstatus==0) thisHit = &(*myRecHit);      
+    }
+
+  } else if ( subdet ==2 ) {
+
+    EEDetId myid(theId);
+    EcalRecHitCollection::const_iterator myRecHit = EERecHit->find(myid);
+
+    if ( myRecHit != EERecHit->end() ) {
+      
+      // Quality selection on ECAL rec hits
+      Bool_t is_spike=false;
+      if (myRecHit->checkFlag(EcalRecHit::kWeird) || myRecHit->checkFlag(EcalRecHit::kDiWeird)) is_spike=true;
+      int chanstatus=-1;
+      EcalChannelStatus::const_iterator chIt = cstat->find( myRecHit->id() );
+      if ( chIt != cstat->end() ) {
+        chanstatus = chIt->getStatusCode() & 0x1F;
+      }
+      if (!is_spike && chanstatus==0) thisHit = &(*myRecHit);      
+      
+    }
+    
+  }
+  
+  return thisHit;
+
+}
 
 //define this as a plug-in
 DEFINE_FWK_MODULE(EcalTPAnalysis);
