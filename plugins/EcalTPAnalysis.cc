@@ -45,6 +45,8 @@
 #include "Geometry/CaloGeometry/interface/CaloCellGeometry.h"
 #include "Geometry/Records/interface/CaloGeometryRecord.h"
 #include "Geometry/CaloTopology/interface/EcalTrigTowerConstituentsMap.h"
+#include "Geometry/EcalMapping/interface/EcalElectronicsMapping.h"
+#include "Geometry/EcalMapping/interface/EcalMappingRcd.h"
 
 #include "CalibCalorimetry/EcalTPGTools/interface/EcalTPGScale.h"
 
@@ -131,14 +133,17 @@ private:
   //  std::vector< std::pair<float,float> > ebTowers;
   //  std::vector <std::pair<float,float> > eeTowers;
 
-  TH2F * EBrhVStp_;
-  TH2F * EErhVStp_;
+  TH2F * EBtpVSrh_;
+  TH2F * EEtpVSrh_;
 
-  TProfile * EBdiffVStp_; 
-  TProfile * EEdiffVStp_; 
+  TProfile * EBdiffVSrh_; 
+  TProfile * EEdiffVSrh_; 
 
-  TProfile * EBdiffVStpM_; 
-  TProfile * EEdiffVStpM_; 
+  TProfile * EBdiffVSrhM_; 
+  TProfile * EEdiffVSrhM_; 
+
+  TH1F * EBrhEtNOtp_;
+  TH1F * EErhEtNOtp_;
 
   TH1F * EBrh_;
   TH1F * EBtp_;
@@ -215,6 +220,7 @@ private:
   const EERecHitCollection * EERecHit; 
   const EcalChannelStatus* cstat;
   const CaloSubdetectorGeometry *theEndcapGeometry,*theBarrelGeometry;
+  const EcalElectronicsMapping* theMapping_;
 
 };
 
@@ -253,14 +259,17 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
     rewe_ = true;
   }
 
-  EBrhVStp_ = fs->make<TH2F>( "EBrhVStt", "EB RH tower vs TP Et", 40,0.,20.,40,0.,20.);
-  EErhVStp_ = fs->make<TH2F>( "EErhVStt", "EE RH tower vs TP Et", 40,0.,20.,40,0.,20.);
+  EBtpVSrh_ = fs->make<TH2F>( "EBrhVStt", "EB RH tower vs RH Et", 40,0.,20.,40,0.,20.);
+  EEtpVSrh_ = fs->make<TH2F>( "EErhVStt", "EE RH tower vs RH Et", 40,0.,20.,40,0.,20.);
 
-  EBdiffVStp_ = fs->make<TProfile>( "EBdiffVStp", "EB RH-TP tower vs TP Et", 40,0.,20.,-20.,20.);
-  EEdiffVStp_ = fs->make<TProfile>( "EEdiffVStp", "EE RH-TP tower vs TP Et", 40,0.,20.,-20.,20.);
+  EBdiffVSrh_ = fs->make<TProfile>( "EBdiffVSrh", "EB TP-RH tower vs RH Et", 40,0.,20.,-20.,20.);
+  EEdiffVSrh_ = fs->make<TProfile>( "EEdiffVSrh", "EE TP-RH tower vs RH Et", 40,0.,20.,-20.,20.);
 
-  EBdiffVStpM_ = fs->make<TProfile>( "EBdiffVStpM", "EB RH-TP tower vs TP Et matched", 40,0.,20.,-20.,20.);
-  EEdiffVStpM_ = fs->make<TProfile>( "EEdiffVStpM", "EE RH-TP tower vs TP Et matched", 40,0.,20.,-20.,20.);
+  EBdiffVSrhM_ = fs->make<TProfile>( "EBdiffVSrhM", "EB TP-RH tower vs RH Et matched", 40,0.,20.,-20.,20.);
+  EEdiffVSrhM_ = fs->make<TProfile>( "EEdiffVSrhM", "EE TP-RH tower vs RH Et matched", 40,0.,20.,-20.,20.);
+
+  EBrhEtNOtp_ = fs->make<TH1F>( "EBrhEtNOtp", "EB RH tower Et tp=0", 50,0.,5.);
+  EErhEtNOtp_ = fs->make<TH1F>( "EErhEtNOtp", "EE RH tower Et tp=0", 50,0.,5.);
 
   EBrh_ = fs->make<TH1F>( "EBrh", "EB RH tower multiplicity", 100,0.,100.);
   EBtp_ = fs->make<TH1F>( "EBtp", "EB TP tower multiplicity", 100,0.,100.);
@@ -355,7 +364,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   float theWeight = 1.;
   if ( ! iEvent.isRealData() && rewe_ ) {
     edm::Handle<std::vector< PileupSummaryInfo> > puSummary;
-    iEvent.getByLabel(puSummaryCollection_, puSummary );
+   iEvent.getByLabel(puSummaryCollection_, puSummary );
     
     std::vector<PileupSummaryInfo>::const_iterator PVI;
 
@@ -421,6 +430,10 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
 
   EcalTPGScale ecalScale ;
   ecalScale.setEventSetup(iSetup) ;
+
+  edm::ESHandle< EcalElectronicsMapping > ecalmapping;
+  iSetup.get< EcalMappingRcd >().get(ecalmapping);
+  theMapping_ = ecalmapping.product();
 
   //  ebTowers.clear();
   //  eeTowers.clear();
@@ -509,8 +522,9 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   float rhEEEtSumM = 0.;
 
   for (unsigned int iPair=0; iPair < ebTowers.size(); iPair++) {
-    EBrhVStp_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first,theWeight); 
-    EBdiffVStp_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first-ebTowers[iPair].value().second,theWeight); 
+    if ( ebTowers[iPair].value().first == 0. ) EBrhEtNOtp_->Fill(ebTowers[iPair].value().second,theWeight); 
+    EBtpVSrh_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first,theWeight); 
+    EBdiffVSrh_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first-ebTowers[iPair].value().second,theWeight); 
     if ( ebTowers[iPair].value().first > tpEtTh_ ) { nebtp++; tpEBEtSum += ebTowers[iPair].value().second; }
     if ( ebTowers[iPair].value().second > rhTEtTh_ ) { nebrh++; rhEBEtSum += ebTowers[iPair].value().second; }
     if ( (int)nVtx == vtxSel_ ) {
@@ -521,7 +535,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
     std::vector<DetId> recTow((*eTTmap_).constituentsOf(ebTowers[iPair].id()));
 
     if ( ebTowers[iPair].value().first > tpEtTh_ && ebTowers[iPair].value().second > rhTEtTh_ ) { 
-      EBdiffVStpM_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first-ebTowers[iPair].value().second,theWeight); 
+      EBdiffVSrhM_->Fill(ebTowers[iPair].value().second,ebTowers[iPair].value().first-ebTowers[iPair].value().second,theWeight); 
       nebrhm++;
       tpEBEtSumM += ebTowers[iPair].value().first;
       rhEBEtSumM += ebTowers[iPair].value().second;
@@ -539,6 +553,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
           EBhitTimeM_->Fill(time,theWeight);
         }
       }
+      //      std::cout << "EB TT size = " << recTow.size() << std::endl;
 
     }
     else if ( ebTowers[iPair].value().second > rhTEtTh_ ) {
@@ -570,8 +585,9 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   if ( nebrh > 0 ) EBMatchEffVSvtx_->Fill((int)nVtx,(float)nebrhm/(float)nebrh, theWeight);
  
   for (unsigned int iPair=0; iPair < eeTowers.size(); iPair++) {
-    EErhVStp_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first,theWeight); 
-    EEdiffVStp_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first-eeTowers[iPair].value().second,theWeight); 
+    if ( eeTowers[iPair].value().first == 0. ) EErhEtNOtp_->Fill(eeTowers[iPair].value().second,theWeight); 
+    EEtpVSrh_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first,theWeight); 
+    EEdiffVSrh_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first-eeTowers[iPair].value().second,theWeight); 
     if ( eeTowers[iPair].value().first > tpEtTh_ ) { neetp++; tpEEEtSum += eeTowers[iPair].value().first; }
     if ( eeTowers[iPair].value().second > rhTEtTh_ ) { neerh++; rhEEEtSum += eeTowers[iPair].value().second; }
     if ( (int)nVtx == vtxSel_ ) {
@@ -582,7 +598,15 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
     std::vector<DetId> recTow((*eTTmap_).constituentsOf(eeTowers[iPair].id()));
 
     if ( eeTowers[iPair].value().first > tpEtTh_ && eeTowers[iPair].value().second > rhTEtTh_ ) { 
-      EEdiffVStpM_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first-eeTowers[iPair].value().second,theWeight); 
+      EEdiffVSrhM_->Fill(eeTowers[iPair].value().second,eeTowers[iPair].value().first-eeTowers[iPair].value().second,theWeight); 
+      
+      // if ( std::fabs(eeTowers[iPair].value().first-eeTowers[iPair].value().second) > 2. && eeTowers[iPair].value().first > 6. ) {
+      //   std::cout << "Interesting difference TT = " << eeTowers[iPair].id() 
+      //             << " TP = " << eeTowers[iPair].value().first 
+      //             << " RH = " << eeTowers[iPair].value().second << std::endl;
+      // }
+      // std::cout << "EE TT size = " << recTow.size() << std::endl;
+      
       neerhm++;
       tpEEEtSumM += eeTowers[iPair].value().first;
       rhEEEtSumM += eeTowers[iPair].value().second;
@@ -598,6 +622,11 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
           float time = myRecHit->time();
           EEhitEtM_->Fill(et,theWeight);
           EEhitTimeM_->Fill(time,theWeight);
+
+          // EEDetId thisDetId(myRecHit->detid()());
+          // std::cout << "TT = " << eeTowers[iPair].id() << " iRec = " << iRec << " detId = " << thisDetId << " Et = " << et << std::endl;
+          // EcalElectronicsId eleId(theMapping_->getElectronicsId(thisDetId));
+          // std::cout << "Electronics Id = " << eleId << std::endl;
         }
       }
 
@@ -679,14 +708,18 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   //   rhEETotEt += myRecHit->energy()*std::sin(theta);
   //   EcalTrigTowerDetId towid = (*eTTmap_).towerOf(myid);
   //   if ( tp.product()->find(towid) != tp.product()->end() ) rhEEnumTT++;
+  //   bool isTT( tp.product()->find(towid) != tp.product()->end() && (tp.product()->find(towid))->compressedEt() > 0 );
+  //   std::cout << "EE RH # " << rhEEnum << " detId = " << myid << " isGood = "  << giveGoodHit(myid) << " isTT = " << isTT  << " Et = " << myRecHit->energy()*std::sin(theta) << std::endl;
   // }
 
   // std::cout << "\n" << std::endl;
   // std::cout << "EB: tot RH = " << rhEBTotEt << " TP Et sum = " << tpEBEtSum << " RH Et sum = " << rhEBEtSum << std::endl;
-  //  if ( rhEBnum != rhEBnumTT || rhEBnumTT != rhEBass )  std::cout << "EB rechit # = " << rhEBnum << " associated # = " << rhEBnumTT << " found in TT = " << rhEBass << std::endl;
+  // //   if ( rhEBnum != rhEBnumTT || rhEBnumTT != rhEBass )  std::cout << "EB rechit # = " << rhEBnum << " associated # = " << rhEBnumTT << " found in TT = " << rhEBass << std::endl;
+  // std::cout << "EB rechit # = " << rhEBnum << " associated # = " << rhEBnumTT << " found in TT = " << rhEBass << std::endl;
   // std::cout << "\n" << std::endl;
   // std::cout << "EE: tot RH = " << rhEETotEt << " TP Et sum = " << tpEEEtSum << " RH Et sum = " << rhEEEtSum << std::endl;
-  //  if ( rhEEnum != rhEEnumTT || rhEEnumTT != rhEEass )  std::cout << "EE rechit # = " << rhEEnum << " associated # = " << rhEEnumTT << " found in TT = " << rhEEass << std::endl;
+  // //   if ( rhEEnum != rhEEnumTT || rhEEnumTT != rhEEass )  std::cout << "EE rechit # = " << rhEEnum << " associated # = " << rhEEnumTT << " found in TT = " << rhEEass << std::endl;
+  // std::cout << "EE rechit # = " << rhEEnum << " associated # = " << rhEEnumTT << " found in TT = " << rhEEass << std::endl;
   // std::cout << "\n" << std::endl;
 
  
