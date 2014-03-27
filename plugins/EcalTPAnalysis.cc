@@ -117,6 +117,8 @@ private:
   double effTh_;
 
   const int numvtx;
+  const int nrankTh_;
+  const float minRankTh_;
 
   edm::LumiReWeighting * theLumiW_;
   edm::InputTag puSummaryCollection_;
@@ -216,6 +218,14 @@ private:
   TH1F * EBhitTimenoM_;
   TH1F * EEhitTimenoM_;
 
+  TH1F * rhRank_;
+  TH1F * rhEff_;
+
+  TH1F * tpRank_;
+  TH1F * tpEff_;
+
+  TH1F * normaRank_;
+
   const EBRecHitCollection * EBRecHit; 
   const EERecHitCollection * EERecHit; 
   const EcalChannelStatus* cstat;
@@ -235,7 +245,7 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
   rhTEtTh_(iPSet.getParameter<double>("rhTEtTh")),
   vtxSel_(iPSet.getParameter<int>("vtxSel")),
   effTh_(iPSet.getParameter<double>("effTh")),
-  numvtx(60)
+  numvtx(60),nrankTh_(100),minRankTh_(0.)
 {    
 
   edm::Service<TFileService> fs;
@@ -343,6 +353,21 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
     rhOMWvtx.push_back(0.);
     tpOMWvtx.push_back(0.);
   }
+
+  float maxRankTh_ = minRankTh_+(float)nrankTh_ ;
+
+  rhRank_ = fs->make<TH1F>( "rhRank", "number of events passing rh threshold", nrankTh_, minRankTh_, maxRankTh_  ); 
+  rhRank_->Sumw2();
+  rhEff_ = fs->make<TH1F>( "rhEff", "efficiency passing rh threshold", nrankTh_, minRankTh_, maxRankTh_  ); 
+  rhEff_->Sumw2();
+
+  tpRank_ = fs->make<TH1F>( "tpRank", "number of events passing tp threshold", nrankTh_, minRankTh_, maxRankTh_  ); 
+  tpRank_->Sumw2();
+  tpEff_ = fs->make<TH1F>( "tpEff", "efficiency passing tp threshold", nrankTh_, minRankTh_, maxRankTh_  ); 
+  tpEff_->Sumw2();
+
+  normaRank_ = fs->make<TH1F>( "normaRank", "number of events with at least 1 vtx", nrankTh_, minRankTh_, maxRankTh_ ); 
+  normaRank_->Sumw2();
 
 }
 
@@ -503,6 +528,8 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
     //    std::cout << "SubD = " << subdet << " RH size = " << recTow.size() << " TP Et = " << tpEt << " RH Et = " << rhEt << std::endl; 
 
   }
+
+  if ( nVtx < 1 ) return;
 
   unsigned int nebrh = 0;
   unsigned int nebtp = 0;
@@ -666,6 +693,13 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EBrhM_->Fill(nebrhm,theWeight);
   EErhM_->Fill(neerhm,theWeight);
 
+  for ( int irank = 0; irank < nrankTh_; irank++ ) {
+    float threshold = minRankTh_+(float)irank;
+    if ( rhEBEtSum+rhEEEtSum > threshold ) { rhRank_->Fill(threshold+0.5,theWeight); }
+    if ( tpEBEtSum+tpEEEtSum > threshold ) { tpRank_->Fill(threshold+0.5,theWeight); }
+    normaRank_->Fill(threshold+0.5,theWeight); 
+  }
+
   Wvtx[nVtx] += theWeight;
   if ( rhEBEtSum+rhEEEtSum > effTh_ ) rhOWvtx[nVtx] += theWeight;
   if ( tpEBEtSum+tpEEEtSum > effTh_ ) tpOWvtx[nVtx] += theWeight;
@@ -757,6 +791,9 @@ void EcalTPAnalysis::endJob(){
     }
     
   }
+
+  rhEff_->Divide(rhRank_,normaRank_,1.,1.,"B");
+  tpEff_->Divide(tpRank_,normaRank_,1.,1.,"B");
 
 }
 
