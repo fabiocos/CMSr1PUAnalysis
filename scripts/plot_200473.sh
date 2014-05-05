@@ -2,6 +2,7 @@
 
 # for 500k simulation events: 9633.
 # for 300k simulation events: 5768.
+# for 300k simulation rundep events: 5958.
 
 root -l -q -b 'compareHisto.C(2,"one.root","run 200473 all","two.root","Summer12 PU best","three.root","run 200473 111","four.root","Summer12 PU best","hemulti.pdf","hcalMinBiasAnalysis","hemulti",true,"E1",false,false,false,0.,0.,0.,0.,true,false,-1.,-1.,-1.,-1.,"BR")'
 
