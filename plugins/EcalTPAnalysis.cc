@@ -619,7 +619,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
     if ( eeTowers[iPair].value().second > rhTEtTh_ ) { neerh++; rhEEEtSum += eeTowers[iPair].value().second; }
     if ( (int)nVtx == vtxSel_ ) {
       if ( eeTowers[iPair].value().first > tpEtTh_ ) EEtpEt_->Fill(eeTowers[iPair].value().first,theWeight);
-      if ( eeTowers[iPair].value().first > tpEtTh_ ) EErhEt_->Fill(eeTowers[iPair].value().second,theWeight);
+      if ( eeTowers[iPair].value().second > rhTEtTh_ ) EErhEt_->Fill(eeTowers[iPair].value().second,theWeight);
     }
 
     std::vector<DetId> recTow((*eTTmap_).constituentsOf(eeTowers[iPair].id()));
