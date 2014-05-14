@@ -6,7 +6,7 @@ stdEcalTPPset = cms.PSet(
     eeRecHitCollection = cms.InputTag("ecalRecHit","EcalRecHitsEE"),
     tpCollection = cms.InputTag("ecalDigis:EcalTriggerPrimitives"),
     tpEtTh = cms.double(0.5),
-    rhTEtTh = cms.double(0.5),
+    rhTEtTh = cms.double(1.0),
     vtxSel = cms.int32(20),
     effTh = cms.double(40.)
 )

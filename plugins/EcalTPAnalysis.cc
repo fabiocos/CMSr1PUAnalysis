@@ -208,6 +208,9 @@ private:
   TProfile * EBMatchEffVSvtx_;
   TProfile * EEMatchEffVSvtx_;
 
+  TProfile * EBSumEtMatchEffVSvtx_;
+  TProfile * EESumEtMatchEffVSvtx_;
+
   TH1F * EBhitEtM_;
   TH1F * EEhitEtM_;
   TH1F * EBhitEtnoM_;
@@ -335,6 +338,9 @@ EcalTPAnalysis::EcalTPAnalysis(const edm::ParameterSet& iPSet):
 
   EBMatchEffVSvtx_ = fs->make<TProfile>( "EBMatchEffVSvtx", "EB RH tower sum match eff vs vtx", numvtx, 0., (float)numvtx, 0., 1.);
   EEMatchEffVSvtx_ = fs->make<TProfile>( "EEMatchEffVSvtx", "EE RH tower sum match eff vs vtx", numvtx, 0., (float)numvtx, 0., 1.);
+
+  EBSumEtMatchEffVSvtx_ = fs->make<TProfile>( "EBSumEtMatchEffVSvtx", "EB RH tower matched sum fraction vs vtx", numvtx, 0., (float)numvtx, 0., 1.);
+  EESumEtMatchEffVSvtx_ = fs->make<TProfile>( "EESumEtMatchEffVSvtx", "EE RH tower matched sum fraction vs vtx", numvtx, 0., (float)numvtx, 0., 1.);
 
   EBhitEtM_ = fs->make<TH1F>( "EBhitEtM", "EB matched rechit Et", 100, 0., 50.); 
   EEhitEtM_ = fs->make<TH1F>( "EEhitEtM", "EE matched rechit Et", 100, 0., 50.); 
@@ -610,6 +616,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EBrhEtSumMVSvtx_->Fill((int)nVtx,rhEBEtSumM,theWeight);
 
   if ( nebrh > 0 ) EBMatchEffVSvtx_->Fill((int)nVtx,(float)nebrhm/(float)nebrh, theWeight);
+  if ( rhEBEtSum > 0 ) EBSumEtMatchEffVSvtx_->Fill((int)nVtx,rhEBEtSumM/rhEBEtSum, theWeight);
  
   for (unsigned int iPair=0; iPair < eeTowers.size(); iPair++) {
     if ( eeTowers[iPair].value().first == 0. ) EErhEtNOtp_->Fill(eeTowers[iPair].value().second,theWeight); 
@@ -685,6 +692,7 @@ void EcalTPAnalysis::analyze(const edm::Event& iEvent,const edm::EventSetup& iSe
   EErhEtSumMVSvtx_->Fill((int)nVtx,rhEEEtSumM,theWeight);
 
   if ( neerh > 0 ) EEMatchEffVSvtx_->Fill((int)nVtx,(float)neerhm/(float)neerh, theWeight);
+  if ( rhEEEtSum > 0 ) EESumEtMatchEffVSvtx_->Fill((int)nVtx,rhEEEtSumM/rhEEEtSum, theWeight);
   
   EBrh_->Fill(nebrh,theWeight);
   EBtp_->Fill(nebtp,theWeight);
